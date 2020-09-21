@@ -1,0 +1,29 @@
+version: '3'
+
+services:
+  api:
+    container_name: api
+    build: 
+      context: .
+      dockerfile: docker/go/Dockerfile
+    ports:
+      - 8080:8080
+    links:
+      - postgres
+    tty:
+      true
+    volumes:
+      - ./src/api:/go/src/api
+
+  postgres: # 起動コンテナを区別する名称。コンテナネットワーク上でのホスト名になる
+    container_name: postgres
+    image: postgres:12.4-alpine # ここでDockerHubから取得したいイメージ:タグを指定する
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    ports:
+      - 5432:5432 # ポート転送の設定 ... ホスト側ポート:コンテナ内ポート 
+    volumes: # マウントの設定 ... ホスト側ディレクトリ:コンテナ側ディレクトリ
+      - ./src/db/sh:/docker-entrypoint-initdb.d # この中の.sh、.sqlファイルは自動実行される
+      - ./src/db/storage:/var/lib/postgresql/data # データベースデータを永続化する
