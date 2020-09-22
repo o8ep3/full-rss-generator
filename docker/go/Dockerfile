@@ -14,4 +14,4 @@ RUN apk update \
 
 EXPOSE 8080
 
-#CMD [ "realize", "start", "--run" ]
+CMD [ "realize", "start", "--run" ]

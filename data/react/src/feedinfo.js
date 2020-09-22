@@ -6,7 +6,7 @@ import Loading from './loading';
 
 const env = process.env
 console.log(process.env)
-const apiUrl = env.API_URL
+const apiUrl = env.REACT_APP_API
 const FeedInfoApi = apiUrl + "/feedinfo"
 
 export default class FeedInfo extends Component {
