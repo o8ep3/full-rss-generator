@@ -1,0 +1,24 @@
+settings:
+  legacy:
+    force: false
+    interval: 0s
+schema:
+- name: api
+  path: .
+  commands: 
+    install:
+      status: true
+      method: go build -o fullRssGeneratorAPI
+    run:
+      status: true
+      method: ./fullRssGeneratorAPI
+  watcher:
+    extensions:
+    - go
+    paths:
+    - /
+    ignore:
+      paths:
+      - .git
+      - .realize
+      - vendor
