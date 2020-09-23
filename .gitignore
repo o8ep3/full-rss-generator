@@ -1,2 +1,4 @@
 /data/db/storage/
-/data/react/app/full-rss-generator
+/data/react/app/full-rss-generator/
+/data/certbot/conf/
+/data/certbot/www/

@@ -5,7 +5,6 @@ import { Button } from '@material-ui/core';
 import Loading from './loading';
 
 const env = process.env
-console.log(process.env)
 const apiUrl = env.REACT_APP_API
 const FeedInfoApi = apiUrl + "/feedinfo"
 
