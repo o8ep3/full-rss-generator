@@ -5,22 +5,27 @@ if ! [ -x "$(command -v docker-compose)" ]; then
   exit 1
 fi
 
+read -p "Input domain name: " domain
+read -p "Input email for Let's encrypt: " email
+read -p "Input username for Basic authentication: " user
+read -p "Input password for Basic authentication: " passwd
 
-### config ###
-domain="example.com"
-email="" # Adding a valid address is strongly recommended
-user="" # Username for Basic authentication
-######
+echo DOMAIN_NAME=$domain >> ./config.env
+echo REACT_APP_API=https://${domain}/api >> ./config.env
+
+data_path="./data/certbot"
+mkdir ./data/db/storage
+mkdir $data_path/conf
+mkdir $data_path/www
 
 echo "### Creating react app ..."
-docker-compose build node
+docker-compose build
 docker-compose run --rm node sh -c "npm install -g create-react-app && create-react-app full-rss-generator"
 cp -r ./data/react/src ./data/react/app/full-rss-generator
 rm -rf ./data/react/src
 
 domains=($domain)
 rsa_key_size=4096
-data_path="./data/certbot"
 staging=0 # Set to 1 if you're testing your setup to avoid hitting request limits
 
 if [ -d "$data_path" ]; then
@@ -31,8 +36,12 @@ if [ -d "$data_path" ]; then
 fi
 
 echo "### Creating htpasswd ..."
-path="/data/nginx/htpasswd/.htpasswd"
-htpasswd -c $path $user
+if ! [ -x "$(command -v htpasswd)" ]; then
+  echo 'Installing htpasswd' >&2
+  sudo apt install apache2-utils -y
+fi
+path="./data/nginx/htpasswd/.htpasswd"
+htpasswd -c -b $path $user $passwd
 
 if [ ! -e "$data_path/conf/options-ssl-nginx.conf" ] || [ ! -e "$data_path/conf/ssl-dhparams.pem" ]; then
   echo "### Downloading recommended TLS parameters ..."

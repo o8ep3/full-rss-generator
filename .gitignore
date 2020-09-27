@@ -1,4 +1,5 @@
-/data/db/storage/
+/data/db/storage/*
 /data/react/app/full-rss-generator/
-/data/certbot/conf/
-/data/certbot/www/
+/data/certbot/conf/*
+/data/certbot/www/*
+!.gitkeep

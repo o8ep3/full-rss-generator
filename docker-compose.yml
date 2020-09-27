@@ -17,7 +17,7 @@ services:
       - ./data/api:/go/src/api
     depends_on:
       - postgres
-    command: bin/sh -c "./wait.sh realize start --run"
+    restart: always
 
   postgres: # 起動コンテナを区別する名称。コンテナネットワーク上でのホスト名になる
     container_name: fullrss_db
@@ -28,7 +28,8 @@ services:
       - 5432:5432 # ポート転送の設定 ... ホスト側ポート:コンテナ内ポート
     volumes: # マウントの設定 ... ホスト側ディレクトリ:コンテナ側ディレクトリ
       - ./data/db/sh:/docker-entrypoint-initdb.d # この中の.sh、.sqlファイルは自動実行される
-      - ./data/db/storage:/var/lib/postgresql/data # データベースデータを永続化する
+      - postgres-db:/var/lib/postgresql/data
+    restart: always
 
   node:
     container_name: fullrss_app
@@ -47,30 +48,50 @@ services:
     tty: true
     depends_on:
      - api
+    restart: always
 
   nginx:
     container_name: nginx
-    image: nginx:1.15-alpine
+    build:
+      context: .
+      dockerfile: docker/nginx/Dockerfile
     ports:
       - "80:80"
       - "443:443"
     env_file:
       - config.env
     volumes:
-      - ./data/nginx:/etc/nginx/conf.d
+      - ./data/nginx/conf.d:/etc/nginx/conf.d
       - ./data/nginx/htpasswd:/etc/nginx/htpasswd
-      - ./data/certbot/conf:/etc/letsencrypt
-      - ./data/certbot/www:/var/www/certbot
-    command: /bin/sh -c "envsubst '$$APP_CONTAINER$$DOMAIN_NAME$$API_CONTAINER' < /etc/nginx/conf.d/app.conf.template > /etc/nginx/conf.d/app.conf && while :; do sleep 6h & wait $${!}; nginx -s reload; done && nginx -g 'daemon off;'"
+      - certbot-conf:/etc/letsencrypt
+      - certbot-www:/var/www/certbot
     depends_on:
       - node
       - api
+    restart: always
 
   certbot:
-    image: certbot/certbot
+    image: certbot/certbot:arm32v6-latest
     volumes:
-      - ./data/certbot/conf:/etc/letsencrypt
-      - ./data/certbot/www:/var/www/certbot
+      - certbot-conf:/etc/letsencrypt
+      - certbot-www:/var/www/certbot
     entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
     depends_on:
       - nginx
+    restart: always
+volumes:
+    postgres-db:
+      driver_opts:
+        type: none
+        device: $PWD/data/db/storage
+        o: bind
+    certbot-conf:
+      driver_opts:
+        type: none
+        device: $PWD/data/certbot/conf
+        o: bind
+    certbot-www:
+      driver_opts:
+        type: none
+        device: $PWD/data/certbot/www
+        o: bind
